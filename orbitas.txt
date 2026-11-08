@@ -1,0 +1,104 @@
+/*
+
+
+Main function:
+TypeFactorization  - returns a vector with all posible types of factorization [for a given matrix M of the Frobenius on the l-torsions]
+
+Subfunctions:
+FrobeniusD - returns the image of a divisor D after applying n-times the Frobenius[for a specific image of D_1;length=n].
+Orbita - return a vector with the orbit of a specific divisor [for a specific image of D_1]
+Orbitas - return a vector with the type of orbits [for a specific image of D_1]
+Orbitas2 -return a vector with the orbits [for a specific image of D_1]
+
+Setup:
+F:=GF(3);
+P<x,D1,w1,w2,w3,w4>:=PolynomialRing(F,6);
+load "orbitasAAECC.txt";
+
+*/
+
+
+FrobeniusD:=function(M,FrobD1,D,length)
+V := Vector(P, [w1,w2,w3,w4]);
+A:=V*M;  
+Frobw1:=A[1];
+Frobw2:=A[2];
+Frobw3:=A[3];
+Frobw4:=A[4];
+
+FrobD:=Coefficient(D,D1,1)*FrobD1+Coefficient(D,w1,1)*Frobw1+Coefficient(D,w2,1)*Frobw2+Coefficient(D,w3,1)*Frobw3+Coefficient(D,w4,1)*Frobw4; 
+
+Frob:=Coefficient(FrobD,D1,1)*FrobD1+Coefficient(FrobD,w1,1)*Frobw1+Coefficient(FrobD,w2,1)*Frobw2+Coefficient(FrobD,w3,1)*Frobw3
++Coefficient(FrobD,w4,1)*Frobw4; 
+
+	if length eq 1 then
+	Frob:=FrobD;
+	else
+		for i:=1 to length -2 do
+		Frob:=Coefficient(Frob,D1,1)*FrobD1+Coefficient(Frob,w1,1)*Frobw1+Coefficient(Frob,w2,1)*Frobw2
+                +Coefficient(Frob,w3,1)*Frobw3+Coefficient(Frob,w4,1)*Frobw4;
+		end for;
+	end if;	
+return Frob;
+end function;
+
+Orbita:=function(M,FrobD1,D)
+J:={};
+j:=1;
+while D notin J do
+	J:=J join {FrobeniusD(M,FrobD1,D,j)};
+	j:=j+1;
+end while;
+return J;
+end function;
+
+
+Orbitas:=function(M,FrobD1,l)
+V:={D1+i*w1+j*w2+k*w3+t*w4: i,j,k,t in [0..(l-1)]};
+S:={};
+vec:=[];
+while #(V diff S) ne 0 do
+	t:=Random(V diff S);
+	O:=Orbita(M,FrobD1,t);
+	S:=S join O;
+	vec:=vec cat [#O];
+end while;
+return Sort(vec);
+end function;
+
+
+
+
+Orbitas2:=function(M,FrobD1,l)
+V:={D1+i*w1+j*w2+k*w3+t*w4: i,j,k,t in [0..(l-1)]};
+S:={};
+vec:=[];
+while #(V diff S) ne 0 do
+	t:=Random(V diff S);
+	O:=Orbita(M,FrobD1,t);
+	S:=S join O;
+	vec:=vec cat [O];
+end while;
+return vec;
+end function;
+
+
+
+
+TypeFactorization:=function(M,l);
+V:=[D1+i*w1+j*w2+k*w3+t*w4: i,j,k,t in [0..(l-1)]];
+MR:=MatrixRing(P,4);
+types:={Orbitas(M,V[i],l): i in [1..(l^4)]};
+w:=[g:g in types];
+k:=[[]:j in [1..#w]];
+for i:=1 to #w do
+	for b in {j: j in w[i]} do k[i]:=k[i] cat [<b,#[l: l in w[i] | l eq b]>]; 
+	end for; 
+end for;
+return k;
+end function;
+
+
+
+
+
